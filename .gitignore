@@ -1,0 +1,26 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyInstaller
+build/
+*.spec.bak
+
+# Large binaries
+dist/bin/*.dat
+dist/bin/*.exe
+*.exe
+
+# Release zip
+*.zip
+*.tar.gz
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+Desktop.ini
