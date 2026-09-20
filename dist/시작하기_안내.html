@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KsaMacro v1.2.0 시작하기</title>
+  <style>
+    :root { --navy:#12345b; --blue:#1677b8; --sky:#eaf7ff; --mint:#e8f7f1; --ink:#1d2a35; --muted:#647483; --line:#d8e3ea; --orange:#f39a33; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:#f4f8fb; font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; line-height:1.65; }
+    main { width:min(1040px,calc(100% - 32px)); margin:auto; }
+    header { color:white; background:linear-gradient(135deg,#0c3154,#1687b7); overflow:hidden; }
+    .hero { min-height:320px; display:grid; grid-template-columns:1.25fr .75fr; align-items:center; gap:32px; padding:48px 0; }
+    .hero h1 { margin:0 0 8px; font-size:clamp(34px,6vw,64px); line-height:1.08; }
+    .hero p { margin:8px 0 24px; font-size:18px; opacity:.9; }
+    .badge { display:inline-block; padding:5px 12px; border:1px solid #ffffff70; border-radius:999px; background:#ffffff18; font-weight:700; }
+    .ship { width:min(260px,75vw); justify-self:center; filter:drop-shadow(0 18px 22px #06233c88); }
+    nav { position:sticky; top:0; z-index:2; background:#fffffff0; backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+    nav div { width:min(1040px,calc(100% - 32px)); margin:auto; display:flex; gap:18px; overflow:auto; }
+    nav a { padding:13px 0; color:var(--navy); text-decoration:none; white-space:nowrap; font-weight:700; }
+    section { padding:42px 0 8px; scroll-margin-top:56px; }
+    h2 { margin:0 0 18px; color:var(--navy); font-size:30px; }
+    h3 { margin:0 0 8px; color:var(--navy); }
+    h4 { margin:18px 0 6px; color:var(--navy); }
+    .lead { color:var(--muted); margin-top:-10px; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+    .grid3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+    .card { background:white; border:1px solid var(--line); border-radius:18px; padding:22px; box-shadow:0 8px 28px #34536a0c; }
+    .card > :last-child { margin-bottom:0; }
+    .step { display:flex; gap:16px; }
+    .num { flex:0 0 42px; height:42px; display:grid; place-items:center; border-radius:13px; color:white; background:var(--blue); font-size:20px; font-weight:800; }
+    .tip { margin:14px 0 0; padding:12px 14px; border-radius:10px; background:var(--sky); color:#174d70; }
+    .warning { background:#fff4e5; color:#7c4913; }
+    .danger { background:#fdecec; color:#8a1f1f; }
+    .ok { background:var(--mint); color:#17573f; }
+    .screen { margin-top:20px; padding:12px; border-radius:18px; background:#dce6ec; box-shadow:0 12px 30px #23384922; }
+    .titlebar { padding:8px 12px; border-radius:10px 10px 0 0; color:white; background:var(--navy); font-size:13px; }
+    .window { padding:18px; border-radius:0 0 10px 10px; background:#f8fbfd; display:grid; gap:10px; }
+    .row { display:grid; grid-template-columns:120px 1fr 1fr; gap:8px; align-items:center; padding:10px; border:1px solid var(--line); border-radius:9px; background:white; }
+    .field { min-height:30px; border:1px solid #b8c8d3; border-radius:5px; background:#f7fafc; }
+    .button { padding:7px 12px; border-radius:6px; color:white; background:var(--blue); text-align:center; font-weight:700; }
+    .button.green { background:#20966d; }
+    .callout { display:grid; grid-template-columns:58px 1fr; gap:14px; align-items:center; margin:14px 0; }
+    .icon { width:58px; height:58px; display:grid; place-items:center; border-radius:16px; background:var(--sky); font-size:29px; }
+    .phone { width:min(390px,100%); margin:auto; padding:14px; border:8px solid #24384b; border-radius:28px; background:#dff3ff; }
+    .bubble { margin:10px 0; padding:12px; border-radius:12px; background:white; box-shadow:0 3px 12px #183b5520; font-size:14px; }
+    .keys { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+    .key { padding:10px 5px; border-radius:8px; background:white; border:1px solid #bfd3df; text-align:center; font-size:13px; font-weight:700; }
+    .flow { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; counter-reset:flow; }
+    .flow div { position:relative; padding:14px 12px; border-radius:14px; background:white; border:1px solid var(--line); font-size:14px; }
+    .flow b { display:block; color:var(--navy); margin-bottom:4px; }
+    .table-wrap { overflow-x:auto; border-radius:14px; }
+    table { width:100%; border-collapse:collapse; background:white; }
+    th,td { padding:13px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+    th { color:white; background:var(--navy); white-space:nowrap; }
+    code { padding:2px 6px; border-radius:5px; background:#edf2f5; }
+    ol, ul { padding-left:22px; }
+    li { margin:4px 0; }
+    footer { margin-top:48px; padding:28px 0; color:#dcebf5; background:var(--navy); text-align:center; }
+    @media (max-width:820px) { .flow { grid-template-columns:1fr 1fr; } .grid3 { grid-template-columns:1fr; } }
+    @media (max-width:720px) { .hero,.grid { grid-template-columns:1fr; } .hero { text-align:center; } .row { grid-template-columns:1fr; } .ship { width:170px; } .flow { grid-template-columns:1fr; } }
+    @media print { nav { display:none; } body { background:white; } .card,.screen,.flow div { box-shadow:none; break-inside:avoid; } section { padding-top:24px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <main class="hero">
+      <div><span class="badge">Windows · v1.2.0</span><h1>KsaMacro<br>시작하기</h1><p>KSA 여객선(가보고 싶은 섬) 잔여석을 대신 지켜보다가, 자리가 나면 바로 예약하고 휴대폰으로 알려 드립니다.</p></div>
+      <img class="ship" src="bin/ship_icon.png" alt="KsaMacro 배 아이콘">
+    </main>
+  </header>
+  <nav><div>
+    <a href="#quick">빠른 시작</a><a href="#screen">화면 설명</a><a href="#flow">동작 방식</a><a href="#payment">결제 방식</a>
+    <a href="#virtual">가상계좌</a><a href="#telegram">텔레그램</a><a href="#alerts">알림 종류</a><a href="#security">보안</a><a href="#help">문제 해결</a>
+  </div></nav>
+  <main>
+
+    <section id="quick">
+      <h2>빠른 시작</h2>
+      <p class="lead">압축을 푼 폴더에서 <b>KsaMacro_실행</b>을 더블클릭합니다. <code>bin</code> 폴더의 파일은 직접 실행하거나 옮기지 마세요.</p>
+      <div class="card" style="margin-bottom:18px">
+        <h3>시작 전에 준비할 것</h3>
+        <ul>
+          <li><b>KSA 회원 계정</b>: 가보고 싶은 섬(island.theksa.co.kr)에 가입한 휴대폰번호와 비밀번호</li>
+          <li><b>승객 정보</b>: 탑승자 전원의 성명, 생년월일 8자리, 성별, 연락처</li>
+          <li><b>결제 수단 중 하나</b>: 카드(자동 결제) 또는 계좌이체가 가능한 은행 계좌(가상계좌 예약)</li>
+          <li><b>텔레그램(권장)</b>: 휴대폰에서 알림을 받고 원격으로 조작하려면 필요합니다.</li>
+        </ul>
+      </div>
+      <div class="grid">
+        <article class="card step"><div class="num">1</div><div><h3>로그인 확인</h3><p><b>회원번호</b>에 휴대폰번호를 <code>-</code> 없이 입력하고 비밀번호를 넣은 뒤 <b>로그인 확인</b>을 누릅니다. 접속 상태에 회원 이름이 나오면 성공입니다. 다음 실행부터는 저장된 계정으로 자동 로그인합니다.</p></div></article>
+        <article class="card step"><div class="num">2</div><div><h3>여정 선택</h3><p>출발지·도착지, 출발일, 조회 시간 범위, 객실 유형을 고릅니다. <b>🔍 실시간 여정 조회</b>를 눌러 해당 날짜에 운항편이 있는지, 지금 잔여석이 얼마인지 먼저 확인하세요.</p></div></article>
+        <article class="card step"><div class="num">3</div><div><h3>승객과 결제 등록</h3><p><b>➕ 여객 추가</b> 또는 <b>👶 유아 추가</b>로 탑승자를 모두 등록합니다. 카드로 바로 결제하려면 자동 결제를 켜고 카드 정보를 입력하고, 계좌이체로 내려면 자동 결제를 끕니다.</p></div></article>
+        <article class="card step"><div class="num">4</div><div><h3>매크로 시작</h3><p><b>매크로 시작</b>을 누르면 설정한 간격으로 잔여석을 확인합니다. 자리가 나면 바로 예약하고 결과를 화면과 텔레그램으로 알려 드린 뒤 자동으로 멈춥니다.</p></div></article>
+      </div>
+    </section>
+
+    <section id="screen">
+      <h2>화면 설명</h2>
+      <p class="lead">화면은 위에서 아래로 설정합니다. 입력값은 자동으로 저장되어 다음 실행 때 그대로 복원됩니다.</p>
+      <div class="screen" role="img" aria-label="KsaMacro 화면 구성 모형">
+        <div class="titlebar">KsaMacro — KSA 여객선 예매 매크로 v1.2.0</div>
+        <div class="window">
+          <div class="row"><b>① 계정 정보</b><div class="field"></div><div class="button">로그인 확인</div></div>
+          <div class="row"><b>② 텔레그램</b><div class="field"></div><div class="button">연동하기</div></div>
+          <div class="row"><b>③ 예매 설정</b><div class="field"></div><div class="button">🔍 실시간 여정 조회</div></div>
+          <div class="row"><b>④ 승객·결제</b><div class="field"></div><div class="field"></div></div>
+          <div class="row"><b>⑤ 실행</b><div class="button green">매크로 시작</div><div class="button">매크로 중지</div></div>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:18px">
+        <article class="card">
+          <h3>① 계정 정보</h3>
+          <ul>
+            <li><b>회원번호</b>: KSA에 가입한 휴대폰번호 (<code>-</code> 제외)</li>
+            <li><b>비밀번호</b>: KSA 사이트 비밀번호. Windows 보안 저장소(자격 증명 관리자)에 암호화해 보관합니다.</li>
+            <li><b>접속 상태</b>: 로그인에 성공하면 회원 이름이 표시됩니다.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>② 텔레그램 연동 정보</h3>
+          <ul>
+            <li><b>Bot Token</b>: @BotFather에서 받은 봇 토큰을 붙여넣습니다.</li>
+            <li><b>연동하기</b>: 봇과의 대화 기록에서 Chat ID를 자동으로 찾아 연결합니다. 연결되면 버튼이 <b>연동 유지됨</b>으로 바뀝니다.</li>
+          </ul>
+          <p class="tip">자세한 연결 방법은 아래 <a href="#telegram">텔레그램</a> 항목을 보세요.</p>
+        </article>
+        <article class="card">
+          <h3>③ 예매 설정</h3>
+          <ul>
+            <li><b>출발지 / 도착지</b>: 출발지를 고르면 그곳에서 갈 수 있는 도착지만 나옵니다. <b>⇄</b> 버튼으로 둘을 맞바꿀 수 있습니다.</li>
+            <li><b>출발일</b>: 오늘 이후 날짜만 선택할 수 있습니다.</li>
+            <li><b>조회 시간</b>: 30분 단위 시작~종료 시각. 이 범위에 <u>출항하는</u> 배만 예약 대상입니다.</li>
+            <li><b>객실 유형</b>
+              <ul>
+                <li><b>일반객실 우선</b>: 일반실이 있으면 일반실, 없으면 다른 객실이라도 예약</li>
+                <li><b>일반객실만</b>: 일반실(일반·2등·3등·평실)만 예약</li>
+                <li><b>전체 객실</b>: 가장 먼저 찾은 빈 객실을 예약</li>
+              </ul>
+            </li>
+            <li><b>조회 간격</b>: 1~30초. 너무 짧으면 사이트가 요청을 제한할 수 있어 2~5초를 권장합니다.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>④ 승객 및 결제 설정</h3>
+          <ul>
+            <li><b>➕ 여객 추가</b>: 대인(만 13세 이상)·소아(만 2~12세)·경로(만 65세 이상)</li>
+            <li><b>비상연락처</b>: 승객마다 필요합니다. 본인 연락처와 다른 번호를 넣으세요. KSA는 승객들의 연락처와 비상연락처가 모두 서로 달라야 예매를 받습니다.</li>
+            <li><b>👶 유아 추가</b>: 만 2세 미만. 무임이며 좌석을 차지하지 않습니다.</li>
+            <li><b>선택 삭제</b>: 목록에서 고른 승객을 지웁니다.</li>
+            <li><b>자동 결제 체크박스</b>와 <b>카드 정보</b>: 아래 <a href="#payment">결제 방식</a>에서 설명합니다.</li>
+            <li><b>🗑️ 카드 정보 지우기</b>: 화면과 Windows 보안 저장소에서 카드 정보를 즉시 삭제합니다.</li>
+          </ul>
+          <p class="tip">승객 생년월일은 <b>YYYYMMDD 8자리</b>, 연락처와 비상연락처는 숫자만 입력합니다. 첫 번째 승객이 <b>대표 예약자</b>가 되며, 가상계좌 예금주 이름과 연락처에도 쓰입니다.</p>
+        </article>
+        <article class="card">
+          <h3>⑤ 실행 및 로그</h3>
+          <ul>
+            <li><b>매크로 시작 / 중지</b>: 감시를 시작하거나 멈춥니다. 실행 중에는 예매 설정을 바꿀 수 없습니다.</li>
+            <li><b>작업 로그</b>: 조회 횟수, 잔여석 발견, 예약 단계별 진행 상황이 실시간으로 표시됩니다.</li>
+            <li><b>로그 지우기</b>: 화면의 로그만 지웁니다.</li>
+            <li><b>예매 내역 조회</b>: 이 PC에서 예약한 기록과 KSA 서버의 예매내역을 보여 주고, 공식 사이트 예매내역 페이지로 이동할 수 있습니다.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>시작할 때 확인하는 것</h3>
+          <p>매크로 시작을 누르면 다음을 먼저 검사하고, 문제가 있으면 시작하지 않고 알려 줍니다.</p>
+          <ul>
+            <li>KSA 아이디·비밀번호가 입력되어 있는지</li>
+            <li>승객이 1명 이상 있고, 성명·생년월일·연락처가 올바른지</li>
+            <li>자동 결제가 켜져 있으면 카드번호(14~16자리)·유효기간(MMYY)·비밀번호 앞 2자리·생년월일(YYMMDD)이 모두 있는지</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="flow">
+      <h2>매크로는 이렇게 동작합니다</h2>
+      <div class="flow">
+        <div><b>1. 로그인</b>KSA에 로그인하고 현재 예매내역을 기록해 둡니다.</div>
+        <div><b>2. 반복 조회</b>조회 간격마다 조건에 맞는 운항편과 잔여석을 확인합니다.</div>
+        <div><b>3. 좌석 확보</b>자리가 나면 즉시 승객 등록 → 운임 계산 → 좌석 배정을 진행합니다.</div>
+        <div><b>4. 결제/예약</b>카드 자동 결제 또는 가상계좌 예약으로 마무리합니다.</div>
+        <div><b>5. 알림 후 중지</b>결과를 화면·텔레그램으로 알리고 매크로를 멈춥니다.</div>
+      </div>
+      <p class="tip">한 번 예약에 성공하면 매크로는 자동으로 멈춥니다. 같은 조건으로 표가 두 번 예약되지 않도록, 알림 전송이 실패하더라도 다시 예약하지 않습니다.</p>
+      <p class="tip warning">예약이 진행되는 중(3~4단계)에 프로그램을 닫으면 확인 창이 뜨고, 진행 중인 단계가 끝날 때까지 기다린 뒤 종료합니다. 작업 관리자로 강제 종료하면 결제·예약 결과를 알 수 없게 되니 피하세요.</p>
+    </section>
+
+    <section id="payment">
+      <h2>결제 방식</h2>
+      <p class="lead"><b>잔여석 발견 시 즉시 카드 자동 결제 승인</b> 체크박스로 결제 방식을 고릅니다.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>방식</th><th>언제</th><th>결과</th><th>내가 할 일</th></tr></thead>
+          <tbody>
+            <tr><td><b>💳 카드 자동 결제</b></td><td>체크 켬 + 카드 정보 입력</td><td>좌석 확보 즉시 카드 승인과 발권까지 끝납니다. <b>예매 완료</b>.</td><td>없음. 예매내역에서 승선권을 확인합니다.</td></tr>
+            <tr><td><b>🏦 가상계좌 예약</b></td><td>체크 끔</td><td>좌석을 예약하고 입금용 가상계좌를 발급받습니다. <b>입금 대기</b> 상태.</td><td>입금기한 안에 안내된 계좌로 정확한 금액을 이체합니다.</td></tr>
+            <tr><td><b>🔔 빈자리 알림만</b></td><td>체크 끔 + 해당 선사가 가상계좌 미지원</td><td>좌석을 잡지 않고 빈자리 발견만 알린 뒤 매크로가 멈춥니다. 예약·결제는 되지 않습니다.</td><td>알림을 받는 즉시 KSA 예매 페이지에서 직접 예매합니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid" style="margin-top:18px">
+        <article class="card">
+          <h3>카드 정보 입력 형식</h3>
+          <ul>
+            <li><b>카드번호</b>: 14~16자리 숫자 (<code>-</code> 제외)</li>
+            <li><b>유효기간</b>: <b>MMYY</b> 4자리. 카드 앞면의 <code>09/28</code>이면 <code>0928</code></li>
+            <li><b>비밀번호</b>: 카드 비밀번호 앞 2자리</li>
+            <li><b>생년월일</b>: 카드 소유자 생년월일 <b>YYMMDD</b> 6자리</li>
+          </ul>
+          <p class="tip">카드 정보는 설정 파일이 아니라 Windows 보안 저장소에 암호화해 보관합니다. 할부는 일시불로 결제됩니다.</p>
+        </article>
+        <article class="card">
+          <h3>가상계좌는 어느 은행에서든 입금</h3>
+          <p>가상계좌가 발급되는 은행은 선사가 제공하는 은행 중에서 자동으로 정해집니다. 가상계좌는 <b>내가 쓰는 어느 은행 계좌에서든</b> 이체할 수 있으니, 알림에 적힌 은행과 계좌번호로 보내기만 하면 됩니다.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="virtual">
+      <h2>가상계좌 예약 후 입금하기</h2>
+      <div class="grid">
+        <article class="card">
+          <h3>입금 순서</h3>
+          <ol>
+            <li>예약이 완료되면 텔레그램과 PC 화면에 <b>입금은행 · 계좌번호 · 입금액 · 입금기한</b>이 표시됩니다.</li>
+            <li>은행 앱에서 안내된 가상계좌로 <b>표시된 금액과 정확히 같은 금액</b>을 이체합니다. 금액이 다르면 입금이 처리되지 않을 수 있습니다.</li>
+            <li>입금 처리까지 몇 분 걸릴 수 있습니다. 그동안 예약을 취소하지 마세요.</li>
+            <li>KSA 사이트 <b>예매내역</b>에서 상태가 예매 완료로 바뀌었는지 확인합니다.</li>
+          </ol>
+        </article>
+        <article class="card">
+          <h3>꼭 알아 두세요</h3>
+          <ul>
+            <li><b>입금기한까지 입금하지 않으면 예약은 자동 취소</b>됩니다. 입금기한은 선사가 정하며, 알림에 표시된 시각을 기준으로 하세요.</li>
+            <li>예약자(첫 번째 승객)의 이름과 연락처로 가상계좌가 발급됩니다.</li>
+            <li>입금 전 예약 취소나 입금 후 환불은 KSA 사이트 예매내역에서 처리합니다.</li>
+            <li>계좌 정보를 놓쳤다면 PC의 <b>예매 내역 조회</b>(상태 칸에 은행·계좌번호·기한 표시) 또는 KSA 사이트 예매내역의 <b>가상계좌 확인</b>에서 다시 볼 수 있습니다.</li>
+          </ul>
+          <p class="tip warning">모든 선사가 가상계좌를 지원하지는 않습니다. 지원하지 않는 운항편은 빈자리 알림만 보내니, 그 노선은 카드 자동 결제를 권장합니다. 자동 결제를 끈 채 매크로를 시작하면 조회 범위에 미지원 운항편이 있는지 <b>시작할 때 미리 확인해 경고</b>합니다.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="telegram">
+      <h2>휴대폰에서 원격 제어하기</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>처음 연결하기</h3>
+          <div class="callout"><div class="icon">🤖</div><div><b>1. @BotFather에서 봇 만들기</b><br>텔레그램에서 <code>@BotFather</code>를 찾아 <code>/newbot</code>을 보내고, 안내대로 봇 이름을 정하면 Bot Token을 받습니다.</div></div>
+          <div class="callout"><div class="icon">💬</div><div><b>2. 만든 봇에게 먼저 말 걸기</b><br>새로 만든 봇 채팅방에서 <code>/start</code>를 한 번 보냅니다.</div></div>
+          <div class="callout"><div class="icon">🔗</div><div><b>3. KsaMacro와 연결하기</b><br>Token을 붙여넣고 <b>연동하기</b>를 누르면 Chat ID를 자동으로 찾습니다. 봇이 "원격 제어가 활성화되었습니다" 메시지와 메뉴 버튼을 보내면 완료입니다.</div></div>
+          <p class="tip warning">Bot Token은 비밀번호와 같습니다. 토큰을 가진 사람은 이 봇이 받는 메시지를 읽을 수 있습니다. 다른 사람에게 보내거나 화면을 공유하지 마세요.</p>
+        </div>
+        <div class="phone" aria-label="텔레그램 메뉴 그림">
+          <div class="bubble"><b>⚓ KsaMacro 원격 제어가 활성화되었습니다.</b><br>상태: ⏹️ 매크로 대기 중<br>구간: 🚢 출발항 → 도착항<br>자동결제: 꺼짐(가상계좌 예약)<br>카드: 💳 ****1234</div>
+          <div class="keys"><div class="key">▶️ 매크로 시작</div><div class="key">⏹️ 매크로 중지</div><div class="key">🔍 현재 설정 확인</div><div class="key">🚢 여정 즉시 조회</div><div class="key" style="grid-column:1 / -1">⚙️ 예매 설정</div></div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:26px">주 메뉴 버튼</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>버튼</th><th>하는 일</th></tr></thead>
+          <tbody>
+            <tr><td>▶️ 매크로 시작</td><td>PC의 매크로를 시작합니다. PC 화면에서 시작한 것과 같으며, 시작 전 검사도 똑같이 합니다.</td></tr>
+            <tr><td>⏹️ 매크로 중지</td><td>감시를 멈춥니다. 예약이 진행 중이면 그 단계가 끝난 뒤 멈춥니다.</td></tr>
+            <tr><td>🔍 현재 설정 확인</td><td>실행 상태·조회 횟수, 구간, 날짜·시간, 객실, 승객, 자동 결제, 카드(끝 4자리), 조회 간격을 보여 줍니다.</td></tr>
+            <tr><td>🚢 여정 즉시 조회</td><td>지금 설정한 날짜·구간의 운항편과 잔여석을 바로 조회해 보냅니다.</td></tr>
+            <tr><td>⚙️ 예매 설정</td><td>아래 설정 메뉴를 엽니다. 매크로가 실행 중이면 열리지 않습니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top:26px">⚙️ 예매 설정 메뉴</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>버튼</th><th>입력 방법</th></tr></thead>
+          <tbody>
+            <tr><td>🚢 출발항</td><td>항구 이름 일부를 입력하면 후보가 버튼으로 나옵니다(최대 10개). 버튼을 눌러 선택합니다.</td></tr>
+            <tr><td>🏁 도착항</td><td>선택한 출발항에서 갈 수 있는 항구가 버튼으로 나옵니다.</td></tr>
+            <tr><td>🔄 출·도착항 맞바꾸기</td><td>누르면 바로 바뀝니다.</td></tr>
+            <tr><td>📅 날짜</td><td><code>YYYY-MM-DD</code> 형식으로 입력합니다. 예: <code>2026-10-03</code></td></tr>
+            <tr><td>🕐 시작 시간 · 🕙 종료 시간</td><td><code>HH:MM</code> 형식, 30분 단위로 입력합니다. 예: <code>06:30</code></td></tr>
+            <tr><td>💺 객실 유형</td><td>일반객실 우선 · 일반객실만 · 전체 객실 중에서 누릅니다.</td></tr>
+            <tr><td>⏱️ 조회 간격</td><td>1~30 사이의 초 단위 숫자를 입력합니다.</td></tr>
+            <tr><td>💳 자동 결제</td><td>켜기(카드 자동 결제) 또는 끄기(가상계좌 예약)를 누릅니다.</td></tr>
+            <tr><td>🪪 카드 정보</td><td>카드번호 · 유효기간(MMYY) · 비밀번호 앞 2자리 · 생년월일(YYMMDD) 중 바꿀 항목을 누르고 값을 입력합니다.</td></tr>
+            <tr><td>↩️ 설정 메뉴 / 주 메뉴</td><td>이전 메뉴로 돌아갑니다. 입력 대기도 함께 취소됩니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid" style="margin-top:18px">
+        <article class="card">
+          <h3>설정 변경은 이렇게 반영됩니다</h3>
+          <ol>
+            <li>텔레그램에서 값을 보내면 형식을 먼저 검사합니다. 틀리면 다시 입력하라고 안내합니다.</li>
+            <li>통과한 값은 PC 화면의 입력칸에 그대로 반영되고 설정 파일에 저장됩니다.</li>
+            <li>저장이 끝나면 갱신된 현재 설정이 채팅으로 도착합니다.</li>
+          </ol>
+          <p class="tip warning">매크로 실행 중에는 설정을 바꿀 수 없습니다. 먼저 <b>⏹️ 매크로 중지</b>를 누르세요. 승객 정보와 KSA 계정은 PC 화면에서만 바꿀 수 있습니다.</p>
+        </article>
+        <article class="card">
+          <h3>🪪 카드 정보를 텔레그램으로 바꿀 때</h3>
+          <ul>
+            <li>입력한 메시지는 봇이 <b>받자마자 삭제</b>합니다. 매크로 실행 중이라 변경이 거부될 때도 삭제합니다.</li>
+            <li>현재 설정에는 카드번호 <b>끝 4자리만</b> 표시됩니다.</li>
+          </ul>
+          <p class="tip danger">삭제되더라도 메시지는 전송 순간 텔레그램 서버를 거치고, 휴대폰 알림 미리보기나 다른 로그인 기기에 잠깐 보일 수 있습니다. 가능하면 PC 화면에서 입력하세요.</p>
+        </article>
+      </div>
+      <p class="tip">PC에서 KsaMacro를 종료하면 봇이 "원격 메뉴를 닫습니다" 메시지를 보내고 메뉴 버튼이 사라집니다. 다시 실행하면 메뉴가 다시 나타납니다.</p>
+    </section>
+
+    <section id="alerts">
+      <h2>알림 종류</h2>
+      <div class="grid3">
+        <article class="card"><h3>🎉 예매 성공</h3><p>카드 자동 결제로 발권까지 끝난 경우입니다. 선박, 출발시간, 객실·좌석, 금액, 승객, 관리번호가 옵니다. 관리번호는 사이트에 입력하는 값이 아니라 문의할 때 참고하는 번호입니다.</p><p class="tip ok">할 일 없음</p></article>
+        <article class="card"><h3>🏦 가상계좌 예약 완료</h3><p>예약 정보와 함께 입금은행, 계좌번호, 입금액, 입금기한, 예매내역 링크가 옵니다.</p><p class="tip warning">입금기한 안에 입금</p></article>
+        <article class="card"><h3>🔔 빈자리 발견 (예약 안 됨)</h3><p>가상계좌를 지원하지 않는 운항편에 자리가 난 경우입니다. 좌석을 잡지 않았으므로 바로 직접 예매할 수 있습니다. 예매 페이지 링크가 옵니다.</p><p class="tip warning">서둘러 직접 예매</p></article>
+      </div>
+      <div class="card" style="margin-top:18px">
+        <h3>⚠️ 예매 상태 확인 필요 - 매크로 중지</h3>
+        <p>카드 승인이나 가상계좌 발급 도중 사이트 응답이 끊기면, 결제나 예약이 <b>실제로 처리됐는지 알 수 없는</b> 상태가 됩니다. 이때 다시 시도하면 두 번 결제되거나 두 번 예약될 수 있어 매크로가 스스로 멈추고 이 알림을 보냅니다.</p>
+        <p>알림에는 매크로 시작 때 기록해 둔 예매내역과 지금 예매내역을 비교한 결과가 함께 옵니다.</p>
+        <ul>
+          <li><b>"새 항목 N건이 생겼습니다"</b>: 결제·예약이 처리된 것으로 보입니다. KSA 예매내역에서 내용을 확인하세요. 가상계좌라면 계좌 정보도 거기서 볼 수 있습니다.</li>
+          <li><b>"새 항목이 없습니다"</b>: 처리되지 않았을 가능성이 높습니다. 반영이 늦을 수 있으니 몇 분 뒤 다시 확인하세요. 잡혀 있던 좌석은 약 20분 뒤 자동으로 풀립니다.</li>
+          <li><b>"자동 대조를 할 수 없습니다"</b>: 예매내역 조회가 실패한 경우입니다. KSA 예매내역을 직접 확인하세요.</li>
+        </ul>
+        <p class="tip danger">이 알림을 받으면 예매내역을 확인하기 전까지 매크로를 다시 시작하지 마세요. 카드 결제 후 발권에 실패한 경우에는 KSA 고객센터에 결제 취소나 발권을 요청해야 할 수 있습니다.</p>
+      </div>
+    </section>
+
+    <section id="security">
+      <h2>보안과 개인정보</h2>
+      <div class="grid">
+        <article class="card">
+          <h3>어디에 저장되나요?</h3>
+          <ul>
+            <li><b>KSA 비밀번호, 카드 정보, Bot Token</b>: Windows 자격 증명 관리자(보안 저장소)에 암호화해 저장합니다.</li>
+            <li><b>일반 설정</b>(구간, 날짜, 승객 등): <code>%APPDATA%\KsaMacro\config.json</code></li>
+            <li><b>예약 기록</b>: <code>%APPDATA%\KsaMacro\booking_history.json</code></li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>이렇게 쓰면 안전합니다</h3>
+          <ul>
+            <li>공용 PC에서는 사용 후 <b>🗑️ 카드 정보 지우기</b>를 누르세요.</li>
+            <li>Bot Token과 봇 채팅방은 본인만 쓰세요. 봇은 연결된 Chat ID 외의 사용자 명령을 무시합니다.</li>
+            <li>카드 정보는 가능하면 PC 화면에서 입력하세요.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="help">
+      <h2>문제가 생겼을 때</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>증상</th><th>확인할 내용</th></tr></thead>
+          <tbody>
+            <tr><td>로그인이 되지 않음</td><td>회원번호의 <code>-</code>를 빼고, KSA 웹사이트에서 같은 계정으로 로그인되는지 확인합니다.</td></tr>
+            <tr><td>연동하기가 실패함</td><td>Token을 다시 붙여넣고, 텔레그램 봇에게 <code>/start</code>를 먼저 보냈는지 확인합니다. 대화 기록이 없으면 연동하기를 누른 뒤 15초 동안 기다리니, 그 사이에 봇에게 아무 메시지나 보내세요.</td></tr>
+            <tr><td>여정이 나오지 않음</td><td>출발일과 조회 시간 범위를 넓히고 출발지·도착지 조합을 다시 확인합니다. 그날 운항편이 없을 수도 있습니다.</td></tr>
+            <tr><td>잔여석이 있는데 예약하지 않음</td><td>조회 시간 범위에 출항 시각이 들어가는지, 객실 유형이 <b>일반객실만</b>으로 되어 있지 않은지 확인합니다.</td></tr>
+            <tr><td>"예매 진행 중 오류"가 반복됨</td><td>그사이 다른 사람이 자리를 가져간 경우가 많습니다. 매크로는 계속 감시합니다. 승객 정보 오류라면 로그에 표시된 항목을 고치세요.</td></tr>
+            <tr><td>빈자리 알림만 오고 예약이 안 됨</td><td>그 선사는 가상계좌를 지원하지 않습니다. 자동 결제를 켜고 카드 정보를 입력하세요.</td></tr>
+            <tr><td>시작하자마자 "가상계좌 미지원 선사" 경고가 뜸</td><td>자동 결제가 꺼져 있고 조회 범위에 가상계좌 미지원 운항편이 있다는 뜻입니다. 매크로는 계속 감시하지만, 그 운항편은 빈자리 알림만 보냅니다. 자동 예매하려면 중지 후 자동 결제를 켜세요.</td></tr>
+            <tr><td>"예매 상태 확인 필요" 알림</td><td>위 <a href="#alerts">알림 종류</a>의 안내대로 예매내역을 먼저 확인한 뒤 다시 시작하세요.</td></tr>
+            <tr><td>가상계좌 정보를 잃어버림</td><td><b>예매 내역 조회</b> 또는 KSA 사이트 예매내역의 가상계좌 확인에서 다시 볼 수 있습니다.</td></tr>
+            <tr><td>텔레그램 버튼을 눌러도 반응이 없음</td><td>PC에서 KsaMacro가 켜져 있는지 확인한 뒤 봇에게 <code>/start</code>를 보냅니다.</td></tr>
+            <tr><td>텔레그램 설정 변경이 거부됨</td><td>매크로가 실행 중이면 먼저 <b>⏹️ 매크로 중지</b>를 누른 뒤 다시 변경합니다.</td></tr>
+            <tr><td>종료 후에도 텔레그램 메뉴가 남음</td><td>강제 종료나 PC 전원 차단으로 종료 메시지를 보내지 못한 경우입니다. 다음 실행 때 정상으로 돌아옵니다.</td></tr>
+            <tr><td>카드 정보를 지우고 싶음</td><td><b>🗑️ 카드 정보 지우기</b>를 누르면 화면과 Windows 보안 저장소에서 삭제됩니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <footer>KsaMacro v1.2.0 · 한국해운조합 여객선 예매 도우미</footer>
+</body>
+</html>

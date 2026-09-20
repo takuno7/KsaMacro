@@ -30,7 +30,7 @@ c:\KsaMacro\
 ├── dist/                  # 최종 배포용 폴더 (SAC 방지 런처 + bin/ 은닉 구조)
 │   ├── KsaMacro_실행.bat   # 무차단 스마트 런처 진입점
 │   ├── KsaMacro_실행.lnk   # 배 아이콘 바로가기
-│   ├── 시작하기_안내.txt    # 사용자 가이드
+│   ├── 시작하기_안내.html   # 반응형 사용자 가이드
 │   └── bin/               # 코어 엔진 데이터(.dat) 및 내부 모듈
 └── DEVELOP_NOTE.md        # 개발 상세 기록 및 업데이트 로그 (본 문서)
 ```
@@ -76,6 +76,25 @@ KSA 여객선 예매 웹사이트(`https://island.theksa.co.kr`)의 복잡한 �
 2. **최종 티켓 발권 (`ticketComplete`)**:
    - **엔드포인트**: `POST /booking/ticketComplete`
    - 티켓 파라미터에 `groupid`, `logtime`, 배정된 `seatno`를 병합하여 최종 발권 완료.
+
+### 3.5 가상계좌 예약 (자동 결제 꺼짐)
+사이트 `payment.js`의 `fn_ticketComplete_Virtual` 흐름을 그대로 따릅니다 (`/weven_data/wv/web/content/program/booking/js/payment.js`).
+1. **가상계좌 지원 확인**: `POST /payment/selectvirtualinfo` (`companyidlist`=`vesselid[:4]`, `mastertime`)
+   - `errCode != 0` 또는 `banks` 없음 → 가상계좌 미지원 선사. `ticketCompleteParamsCheck`/`checkCapacitySeat` 전에 멈추고 `SEAT_AVAILABLE` 반환(좌석 미점유, 빈자리 알림만). 좌석을 선점하면 약 20분간 사용자 본인도 직접 예매할 수 없어 폐기한 방식.
+   - 시작 시 사전 경고: 자동 결제 꺼짐이면 워커가 `unsupported_virtual_sailings()`로 조회 범위 운항편을 선사(`vesselid[:4]`)별 1회 조회해 미지원 목록을 `warning_signal`(GUI 팝업)·로그·텔레그램으로 알림. 매크로는 계속 진행. 실사이트 확인: 고군산카훼리호(선사 `4322`) 미지원.
+   - 좌석을 잡기 전에 호출하여 미지원 시 불필요한 가상계좌 호출을 막습니다. 입금은행은 `banks[0]` 고정.
+2. 티켓 파라미터는 `approvekind="1"`(가상계좌), `ispresale="0"`(예약)으로 `ticketCompleteParamsCheck` → `checkCapacitySeat`.
+3. **계좌 발급**: `POST /booking/vaapprove` (`amount`, `user_nm`/`user_phone1`=대표 승객, `user_mail`="", `bank_cd`, `companyidlist`, `ticketingkey`)
+   - 응답 `rgroupid`, `logtime`, `rctelegram.r_bank_nm/r_account_no/r_amount`, `sdtelegram.expiredatetime`.
+4. **예약 확정**: `POST /booking/ticketComplete` — 파라미터에 `rgroupid`/`rgroupid2`/`logtime`/`ticketingkey` 병합 (카드의 `groupid` 대신).
+   - `result`와 `data.result[0].errcode == 0`을 모두 확인.
+5. **실패 롤백**
+   - `vaapprove` 실패: `ticketRollBack` (`Method=CapacitySeat`, `ApproveKind=reserve`).
+   - `ticketComplete` 실패: `POST /payment/vacancel {groupid: rgroupid}` 후 `ticketRollBack` (`Method=CashRecord2|Reserve|CapacitySeat`).
+   - `ticketRollBack` 필드명은 사이트 규격대로 `Method`/`TicketingKey`/`GroupID`/`ApproveKind` (카드 실패 롤백도 같은 헬퍼 `_rollback` 사용).
+- 결과 `status="VA_RESERVED"`: 텔레그램·GUI에 입금은행/계좌번호/입금액/입금기한 표시, 이력 상태 `가상계좌 입금대기`.
+- 결제 화면 안내 문구상 결제 진행 제한은 "최대 20분"(주석 처리된 안내라 서버 실제 선점 시간은 미확인).
+- ⚠️ 오프라인 목 테스트(`tests/test_booking.py`)로만 검증됨. 실사이트 첫 예약 시 로그와 예매내역을 반드시 확인.
 
 ---
 
@@ -147,3 +166,43 @@ KSA 여객선 예매 웹사이트(`https://island.theksa.co.kr`)의 복잡한 �
 - 잔여석 `✅N석 잔여` 시각화 및 시작/중지 버튼 비활성화 스타일 적용.
 - 로컬 예매 히스토리 영구 저장 및 KSA 웹 연동 조회 다이얼로그 구축.
 - SAC(스마트 앱 컨트롤) 차단 방지를 위한 `dist/bin/` 은닉 배포 패키지 구축.
+
+### v1.0.2 (2026-09-20)
+- 텔레그램 `🚢 여정 즉시 조회`가 GUI의 기존 실시간 조회 경로를 실행하고 결과를 채팅으로 반환하도록 수정.
+- 회귀 테스트 `tests/test_telegram_menu.py` 추가.
+- 텍스트 안내서를 단일 반응형 HTML 안내서로 교체하고 모바일·인쇄 레이아웃을 지원.
+- 테스트, PyInstaller 빌드, 코어 파일 교체, 버전 ZIP 생성을 수행하는 `build_release.ps1` 추가.
+
+### v1.1.0 (2026-09-20)
+- 텔레그램 원격 메뉴에 `⚙️ 예매 설정`을 추가하고 `context.user_data["waiting_for"]`로 다단계 입력 상태를 관리.
+- `request_update_setting(key, value)` Qt 신호를 통해 텔레그램 스레드에서 GUI 메인 스레드로 설정 변경을 전달.
+- 출발항 검색 후보와 선택 출발항의 연결 도착항을 동적 버튼으로 제공.
+- 날짜, 시작·종료 시간, 객실 유형, 조회 간격, 자동 결제 및 출발·도착항 맞바꾸기를 지원.
+- GUI의 기존 위젯과 `_gather_settings_from_ui()` 저장 경로를 재사용하고 변경 후 현재 상태를 텔레그램으로 회신.
+- 매크로 실행 중에는 텔레그램과 GUI 양쪽에서 설정 변경을 차단.
+
+### v1.2.0 (2026-09-20)
+- 자동 결제 꺼짐 시 좌석 선점에서 멈추지 않고 가상계좌 예약까지 완료 (3.5 참고). 미지원 운항편은 좌석을 잡지 않고 빈자리 알림만, 시작 시 사전 경고.
+- 텔레그램 `🪪 카드 정보` 메뉴: `waiting_for="card:<field>"` 상태, `validate_card_field()` 검증, 입력 메시지 즉시 삭제, 상태에는 끝 4자리만 표시. GUI는 `request_update_setting("card_info", (field, value))`로 입력칸에 반영.
+- 프로그램 종료(`closeEvent`) 시 텔레그램 리스너를 정지하고 `ReplyKeyboardRemove`로 메뉴 키보드 제거.
+- `🚢 여정 즉시 조회`의 대기 안내 메시지 제거.
+- `KsaPaymentStateError`: 카드 승인 이후 또는 가상계좌 발급·확정 응답을 확인할 수 없을 때 발생. 워커는 이 오류에서 재시도하지 않고 중지(중복 결제·예약 방지). 응답 불명 상태에서는 `vacancel`도 호출하지 않음.
+- 워커는 `book()` 성공 직후 `break`를 보장하고, 결과 알림은 `format_result_message()`(HTML 이스케이프)로 별도 보호 블록에서 전송. 회귀 테스트 `tests/test_worker.py`.
+- 결과 불명 사후 대조: 워커가 로그인 직후 `get_reservations()`의 `groupid` 집합을 기준선으로 저장하고, `KsaPaymentStateError` 시 재조회해 새 groupid 유무를 알림에 포함. `get_reservations()`는 실패 시 빈 목록 대신 `KsaError`를 던지도록 변경(빈 목록과 실패 구분, GUI 호출부는 기존 try/except로 처리).
+- 가상계좌 발급 은행은 `banks[0]` 고정 (희망 은행 입력칸은 선택지 없이 자유 입력이라 혼란만 줘서 제거. 가상계좌는 어느 은행에서든 이체 가능). `selectvirtualinfo`의 `expiredatetime`을 입금기한 예비값으로 사용.
+- 실사이트 확인(2026-09-20, 조회 전용): `selectvirtualinfo` 응답은 `data.errCode`(미지원 -2, 지원 0), `data.banks[{vanid, bankcode, bankname}]`, `data.expiredatetime`. 예) 선사 `9603` 지원, `9001` 미지원. `vaapprove`·`ticketComplete`(가상계좌)는 실제 예약이 생기므로 미검증.
+- `config_manager.save_config()`: `tg_token`은 keyring 저장 성공 시 `config.json`에서 제외.
+- `closeEvent`: 워커 실행 중이면 확인 후 `worker.stop()` → `wait(200)` + `processEvents()` 반복으로 진행 중 예매 완료까지 대기.
+- 함정 코드 감사(2026-09-20) 반영:
+  - 결과 코드 비교는 `_ok()`로 통일 (사이트 JS의 `== 0` 느슨한 비교와 동일하게 `0`/`"0"` 허용). 카드 승인 응답에 코드가 없으면 `KsaPaymentStateError`, 명시적 거절은 `KsaCardDeclinedError`(워커 중지).
+  - `checkCapacitySeat` 실패·응답 오류·배정 좌석 수 ≠ 승객 수면 `_rollback` 후 실패. 객실 선택은 유아(ticketid 5) 제외 필요 좌석 수 이상.
+  - 워커는 예매 실패/조회 오류 시 `_relogin_if_expired()`로 `is_logged_in()` 확인 후 재로그인 (기존 오류 문자열 추측 방식 폐기).
+  - 설정·이력 파일은 `_atomic_write_json`(임시 파일 + `os.replace`), 손상 시 `.bak` 보존.
+  - GUI 네트워크 호출은 `_run_bg(fn, on_done, on_error)` → `ThreadPoolExecutor(max_workers=1)`에서 순서대로 실행하고 `_bg_finished` 신호로 GUI 스레드에 결과 전달 (같은 `requests.Session` 동시 사용 방지). 출발항 변경은 `_select_dep(idx, then)`/`_on_dep_changed(idx, then)`로 도착항 로드 후 후속 동작 실행, 늦게 도착한 옛 결과는 무시.
+  - keyring 오류는 `config_manager._keyring_call`이 `_keyring_warnings`에 기록 → GUI `_report_keyring_warnings()`가 같은 내용은 한 번만 로그·팝업. 아이디 변경/비밀번호 삭제 시 이전 keyring 항목 삭제.
+  - 2차 감사: 발권 응답 판정 `_ticket_outcome()` = ok/failed/unknown. failed면 카드 `cardcancel{usedate=logtime, cardgroupid, cancelamount}` 성공 확인 후 `CardRecord|Ticket|CapacitySeat` 롤백(사이트 fn_cardRecordCancel), 가상계좌는 `vacancel` 성공 확인 후에만 롤백. unknown은 아무것도 되돌리지 않고 `KsaPaymentStateError`. 좌석 행 수 검사는 사이트와 같이 전체 티켓(유아 포함) 기준.
+  - 3차 반영: 특수할인 `checked[].seqstring`(vaindex=승객 index) → 승객 `eventcontents`(checkInsert에 포함) → 티켓 파라미터는 `_event_contents()`(사이트 fn_eventContents 동일 규칙). 좌석 배정 실패 롤백 `_rollback_seat()`는 카드 2회/가상계좌 1회. 가상계좌 발급 errCode 실패는 응답 `rgroupid`로 롤백.
+  - 텔레그램: 재연동은 이전 매니저 `finished` → 새 매니저 `start` (GUI `wait()` 없음, `_old_tg_remotes`로 참조 유지). 세션 미가동(`_live` False) 중 `send_log`는 HTTP API로 직접 전송. 세션은 `_run_bot_session`의 finally에서 항상 정리. 로그의 봇 토큰은 `***`로 가리고 `httpx` 로거는 WARNING 이상만.
+  - 비상연락처(`emtel` → 티켓 파라미터 `tel2`): 필수 여부는 `POST /booking/selectDepartureConfiguration`의 `requiredemtel`("00"만 선택). 2026-09-20 조회 결과 인천→굴업도 "02", 말도→관리도 "01"로 모두 필수. `checktel`("01")이면 승객 전원의 tel/emtel이 서로 달라야 하므로 시작 전에 중복 검사.
+  - 남은 과제(의도적으로 유지): 배포 bat이 상위 폴더 소스를 먼저 실행, 실행 파일 `.dat` 배포, `.lnk`에 개발 PC 경로 포함.
+- `tests/test_booking.py`: 저장소에 없는 `diagnose_booking` import를 해당 테스트 내부로 옮겨(없으면 skip) 나머지 테스트가 실행되도록 수정.

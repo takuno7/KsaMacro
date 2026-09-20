@@ -24,3 +24,6 @@ dist/bin/*.exe
 # OS
 Thumbs.db
 Desktop.ini
+
+# Claude/OMC 세션 상태
+.omc/
